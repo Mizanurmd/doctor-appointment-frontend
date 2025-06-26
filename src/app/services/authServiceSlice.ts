@@ -60,6 +60,26 @@ export const loginForUser = createAsyncThunk<
   }
 });
 
+//============== For login ===============//
+
+export const logoutForUser = createAsyncThunk<
+  void,
+  void,
+  { rejectValue: string }
+>("authServiceSlice/logout", async (_, thunkAPI) => {
+  try {
+    await Api.logoutUser();
+    return;
+  } catch (err: unknown) {
+    let message = "Logout failed";
+    if (err && typeof err === "object" && "message" in err) {
+      message = (err as { message: string }).message;
+    }
+    return thunkAPI.rejectWithValue(message);
+  }
+});
+
+
 //=============================Create Slice =======================//
 const authServiceSlice = createSlice({
   name: "authServiceSlice",
@@ -78,7 +98,31 @@ const authServiceSlice = createSlice({
       (state, action: PayloadAction<OurUser>) => {
         state.ourUsers.push(action.payload);
       }
-    );
+    )
+ // Logout
+      .addCase(logoutForUser.fulfilled, (state) => {
+        state.selectedUser = null;
+        state.loading = false;
+        state.error = null;
+        state.ourUsers = []; // Optional: clear list on logout
+      })
+      // Pending state for async thunks
+      .addMatcher(
+        (action) => action.type.startsWith("authServiceSlice/") && action.type.endsWith("/pending"),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      // Rejected state for async thunks
+      .addMatcher(
+        (action) => action.type.startsWith("authServiceSlice/") && action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.type as string;
+        }
+      );
+
   },
 });
 

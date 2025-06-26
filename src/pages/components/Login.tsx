@@ -9,27 +9,25 @@ import { loginForUser } from "../../app/services/authServiceSlice";
 const Login: React.FC = () => {
   const [userData, setUserData] = useState<LoginUserDTO>({
     email: "",
-    password: ""
-
+    password: "",
   });
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
   const submitLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const res = await dispatch(loginForUser(userData)).unwrap();
-    if (res.role === "DOCTOR") {
-      navigate("/doctor");
-    } else {
-      navigate("/patient");
+    e.preventDefault();
+    try {
+      const res = await dispatch(loginForUser(userData)).unwrap();
+      if (res.role === "DOCTOR") {
+        navigate("/doctor");
+      } else {
+        navigate("/patient");
+      }
+    } catch (err) {
+      alert("Login failed");
+      console.error("Login error:", err);
     }
-  } catch (err) {
-    alert("Login failed");
-    console.error("Login error:", err);
-  }
-};
-
+  };
 
   return (
     // <div className="container mt-4">
@@ -45,7 +43,7 @@ const Login: React.FC = () => {
     //   </form>
     // </div>
     <div className="fixed inset-0 flex items-center justify-center z-50 rounded-2xl">
-      <div className="bg-green-200 p-6 rounded-3xl shadow-lg w-[60%] md:w-[400px] md:h-[300px] relative">
+      <div className="bg-green-400 p-6 rounded-3xl shadow-lg w-[60%] md:w-[400px] md:h-[300px] relative">
         <h2 className="text-xl font-bold text-center mb-5 text-fuchsia-700">
           Login User
         </h2>
@@ -81,14 +79,16 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded mt-4 w-35"
-          >
-            Login
-          </button>
-          <div>
-            Have you regitered? <a href="/">Register</a>
+          <div className="text-center">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded mt-4 w-35"
+            >
+              Login
+            </button>
+            <h1 className="hover:text-red-700">
+              Have you regitered? <a href="/register">Register</a>
+            </h1>
           </div>
         </form>
       </div>
