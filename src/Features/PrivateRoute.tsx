@@ -1,41 +1,35 @@
-import React from "react";
+import React, { type JSX } from "react";
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 
 interface PrivateRouteProps {
-  children: React.ReactElement;
+  children: JSX.Element;
+  allowedRoles?: string[];
 }
 
-interface DecodedToken {
-  exp: number;
-  [key: string]: any;
-}
-
-const isTokenValid = (token: string): boolean => {
-  try {
-    const decoded: DecodedToken = jwtDecode(token);
-    const now = Date.now() / 1000;
-    return decoded.exp > now;
-  } catch {
-    return false;
-  }
-};
-
-const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
+  // Get user info from localStorage
   const storedUser = localStorage.getItem("ourUser");
-  let isAuthenticated = false;
-
-  if (storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      const token = user?.token;
-      isAuthenticated = token && isTokenValid(token);
-    } catch {
-      isAuthenticated = false;
-    }
+  if (!storedUser) {
+    // No user logged in, redirect to login
+    return <Navigate to="/" replace />;
   }
-  console.log("Authenticated?", isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/" replace />;
+
+  // Parse stored user
+  const authData = JSON.parse(storedUser);
+
+  // The user role might be in authData.user.role or authData.role depending on your storage structure
+  // Adjust accordingly:
+  const userRole: string | undefined =
+    authData?.user?.role || authData?.role || undefined;
+
+  // Check if role is allowed (if roles provided)
+  if (allowedRoles && !allowedRoles.includes(userRole || "")) {
+    // Role not authorized, redirect or show unauthorized page
+    return <Navigate to="/" replace />;
+  }
+
+  // Authenticated and authorized, render child components
+  return children;
 };
 
 export default PrivateRoute;

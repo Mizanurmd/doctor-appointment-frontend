@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { LoginUserDTO, OurUser, RegisterUserDTO } from "../../pages/interface/OurUser";
+import type { AuthResponse, LoginUserDTO, OurUser, RegisterUserDTO } from "../../pages/interface/OurUser";
 
 const BASE_URL = "http://localhost:8081/api/v1/auth";
 
@@ -24,21 +24,36 @@ const Api = {
   },
 
   // ========================= Login User ==============================
-  loginUser: async (data: LoginUserDTO): Promise<OurUser> => {
-    const res = await axios.post(`${BASE_URL}/login`, data, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+ loginUser: async (data: LoginUserDTO): Promise<AuthResponse> => {
+  const res = await axios.post<AuthResponse>(`${BASE_URL}/login`, data, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-    const user = res.data?.user || res.data;
+  const response = res.data;
 
-    if (user) {
-      localStorage.setItem("ourUser", JSON.stringify(res.data));
-    }
+  // Create a fake user object if needed
+  const user: OurUser = {
+    id: 0,
+  name: "", // Optional: set if available
+  email: data.email,
+  role: response.role ?? "",
+  createdAt: new Date().toISOString(), // ✅ required
+  updatedAt: null,
+  deletedAt: null,
+  };
 
-    return user;
-  },
+  const fullResponse: AuthResponse = {
+    ...response,
+    user, 
+  };
+
+  localStorage.setItem("ourUser", JSON.stringify(fullResponse));
+
+  return fullResponse;
+},
+
 
   // ========================= Logout User =============================
   logoutUser: async (): Promise<any> => {

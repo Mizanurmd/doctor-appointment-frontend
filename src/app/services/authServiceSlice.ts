@@ -5,7 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import Api from "./Api";
 
-import type { LoginUserDTO, OurUser, RegisterUserDTO } from "../../pages/interface/OurUser";
+import type { AuthResponse, LoginUserDTO, OurUser, RegisterUserDTO } from "../../pages/interface/OurUser";
 
 interface AuthState {
   ourUsers: OurUser[]; // list of users
@@ -42,20 +42,18 @@ export const addUser = createAsyncThunk<
 
 //============== For login ===============//
 export const loginForUser = createAsyncThunk<
-  OurUser,
+  AuthResponse,
   LoginUserDTO,
   { rejectValue: string }
 >("authServiceSlice/login", async (data, thunkAPI) => {
   try {
-    const user = await Api.loginUser(data);
-    return user;
+    const response = await Api.loginUser(data); // returns AuthResponse
+    return response;
   } catch (err: unknown) {
     let message = "Login failed";
-
     if (err && typeof err === "object" && "message" in err) {
       message = (err as { message: string }).message;
     }
-
     return thunkAPI.rejectWithValue(message);
   }
 });
@@ -93,18 +91,19 @@ const authServiceSlice = createSlice({
         state.ourUsers.push(action.payload);
       }
     )
-    .addCase(
-      loginForUser.fulfilled,
-      (state, action: PayloadAction<OurUser>) => {
-        state.ourUsers.push(action.payload);
-      }
-    )
+   // Login success
+      .addCase(loginForUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+        if (action.payload.user) {
+          state.selectedUser = action.payload.user;
+          state.ourUsers = [action.payload.user]; 
+        }
+      })
  // Logout
       .addCase(logoutForUser.fulfilled, (state) => {
         state.selectedUser = null;
         state.loading = false;
         state.error = null;
-        state.ourUsers = []; // Optional: clear list on logout
+        state.ourUsers = []; 
       })
       // Pending state for async thunks
       .addMatcher(

@@ -35,6 +35,7 @@ export interface AuthResponse{
   token?: string;
   refreshToken?: string;
   expirationTime?: string;
+  role?: Role;
   user?: OurUser;
 }
 
