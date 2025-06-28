@@ -30,6 +30,7 @@ const AdminPanel: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-8">
+        
         <Outlet />
       </main>
     </div>

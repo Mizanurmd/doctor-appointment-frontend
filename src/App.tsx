@@ -6,29 +6,46 @@ import PrivateRoute from "./Features/PrivateRoute";
 import AdminPanel from "./pages/adminPanel/AdminPanel";
 import Dashboard from "./pages/adminPanel/Dashboard";
 import Logout from "./pages/adminPanel/Logout";
+import { ToastContainer } from "react-toastify";
+import DoctorDashboard from "./pages/components/DoctorDashboard";
 
 
 function App() {
   return (
+    
     <BrowserRouter>
+
+      {/* other components */}
+      <ToastContainer position="top-center" autoClose={5000} />
+    
+
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<Register />} />
 
         <Route
-          path="/doctor"
+          path="/admin"
           element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
+            <PrivateRoute allowedRoles={["ADMIN"]}>
               <AdminPanel />
             </PrivateRoute>
           }
         />
       <Route
-          path="/dashboard"
+          path="/admin/dashboard"
           element={
-            <PrivateRoute>
+            <PrivateRoute allowedRoles={["ADMIN"]}>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+
+         <Route
+          path="/appointments"
+          element={
+            <PrivateRoute allowedRoles={["USER"]}>
+              <DoctorDashboard />
             </PrivateRoute>
           }
         />
@@ -43,6 +60,7 @@ function App() {
         />
       </Routes>
     </BrowserRouter>
+    
   );
 }
 

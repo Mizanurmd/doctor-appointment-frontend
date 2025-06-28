@@ -1,12 +1,7 @@
-export interface BaseEntity {
-  id: number;
-  createdAt: string;    
-  updatedAt?: string | null;
-  deletedAt?: string | null;
-}
+import type { BaseEntity } from "./BaseEntity";
+import type { Role } from "./Role";
 
 
-export type Role = "DOCTOR" | "PATIENT" | string;
 
 export interface OurUser extends BaseEntity {
   name: string;
@@ -19,7 +14,7 @@ export interface RegisterUserDTO{
   name: string;
   email: string;
   password: string;
-  role: Role;
+  role: Role | null;
 }
 export interface LoginUserDTO{
   email: string;
@@ -29,7 +24,7 @@ export interface LoginUserDTO{
 
 
 export interface AuthResponse{
-  statusCode: number;
+  statusCode?: number;
   error?: string;
   message?: string;
   token?: string;

@@ -7,28 +7,37 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
-  // Get user info from localStorage
   const storedUser = localStorage.getItem("ourUser");
+
   if (!storedUser) {
-    // No user logged in, redirect to login
     return <Navigate to="/" replace />;
   }
 
-  // Parse stored user
-  const authData = JSON.parse(storedUser);
+  let userRole: string | undefined;
 
-  // The user role might be in authData.user.role or authData.role depending on your storage structure
-  // Adjust accordingly:
-  const userRole: string | undefined =
-    authData?.user?.role || authData?.role || undefined;
+  try {
+    const authData = JSON.parse(storedUser);
 
-  // Check if role is allowed (if roles provided)
+    // Try accessing nested roleName from role object
+    if (typeof authData?.role === "object" && authData.role?.roleName) {
+      userRole = authData.role.roleName.toUpperCase();
+    } else if (typeof authData?.user?.role === "object" && authData.user.role?.roleName) {
+      userRole = authData.user.role.roleName.toUpperCase();
+    } else if (typeof authData?.role === "string") {
+      userRole = authData.role.toUpperCase();
+    } else if (typeof authData?.user?.role === "string") {
+      userRole = authData.user.role.toUpperCase();
+    }
+  } catch (error) {
+    console.error("Error parsing user data:", error);
+    return <Navigate to="/" replace />;
+  }
+
+  // Check allowed roles
   if (allowedRoles && !allowedRoles.includes(userRole || "")) {
-    // Role not authorized, redirect or show unauthorized page
     return <Navigate to="/" replace />;
   }
 
-  // Authenticated and authorized, render child components
   return children;
 };
 

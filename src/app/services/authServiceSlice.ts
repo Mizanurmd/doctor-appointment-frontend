@@ -5,11 +5,16 @@ import {
 } from "@reduxjs/toolkit";
 import Api from "./Api";
 
-import type { AuthResponse, LoginUserDTO, OurUser, RegisterUserDTO } from "../../pages/interface/OurUser";
+import type {
+  AuthResponse,
+  LoginUserDTO,
+  OurUser,
+  RegisterUserDTO,
+} from "../../pages/interface/OurUser";
 
 interface AuthState {
   ourUsers: OurUser[]; // list of users
-  selectedUser: OurUser | null; // selected user details
+  selectedUser: OurUser | null; // currently logged-in user
   loading: boolean;
   error: string | null;
 }
@@ -20,7 +25,8 @@ const initialState: AuthState = {
   loading: false,
   error: null,
 };
-//============== For regiter ===============//
+
+//============== For register ===============//
 export const addUser = createAsyncThunk<
   OurUser,
   RegisterUserDTO,
@@ -58,8 +64,7 @@ export const loginForUser = createAsyncThunk<
   }
 });
 
-//============== For login ===============//
-
+//============== For logout ===============//
 export const logoutForUser = createAsyncThunk<
   void,
   void,
@@ -77,51 +82,72 @@ export const logoutForUser = createAsyncThunk<
   }
 });
 
-
-//=============================Create Slice =======================//
+//============================= Create Slice =======================//
 const authServiceSlice = createSlice({
   name: "authServiceSlice",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-    .addCase(
-      addUser.fulfilled,
-      (state, action: PayloadAction<OurUser>) => {
+      // Register fulfilled: add user to list
+      .addCase(addUser.fulfilled, (state, action: PayloadAction<OurUser>) => {
         state.ourUsers.push(action.payload);
-      }
-    )
-   // Login success
-      .addCase(loginForUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
-        if (action.payload.user) {
-          state.selectedUser = action.payload.user;
-          state.ourUsers = [action.payload.user]; 
-        }
-      })
- // Logout
-      .addCase(logoutForUser.fulfilled, (state) => {
-        state.selectedUser = null;
         state.loading = false;
         state.error = null;
-        state.ourUsers = []; 
       })
-      // Pending state for async thunks
+      // Login fulfilled: set logged in user & reset error/loading
+      .addCase(
+        loginForUser.fulfilled,
+        (state, action: PayloadAction<AuthResponse>) => {
+          if (action.payload.user) {
+            state.selectedUser = action.payload.user;
+            state.ourUsers = [action.payload.user];
+          }
+          state.loading = false;
+          state.error = null;
+        }
+      )
+      // Logout fulfilled: reset auth state
+      .addCase(logoutForUser.fulfilled, (state) => {
+        state.selectedUser = null;
+        state.ourUsers = [];
+        state.loading = false;
+        state.error = null;
+      })
+
+      // Pending matcher: set loading true and clear errors
       .addMatcher(
-        (action) => action.type.startsWith("authServiceSlice/") && action.type.endsWith("/pending"),
+        (action) =>
+          action.type.startsWith("authServiceSlice/") &&
+          action.type.endsWith("/pending"),
         (state) => {
           state.loading = true;
           state.error = null;
         }
       )
-      // Rejected state for async thunks
+
+      // Rejected matcher: set error message from payload and loading false
       .addMatcher(
-        (action) => action.type.startsWith("authServiceSlice/") && action.type.endsWith("/rejected"),
+        (action) =>
+          action.type.startsWith("authServiceSlice/") &&
+          action.type.endsWith("/rejected"),
         (state, action) => {
           state.loading = false;
-          state.error = action.type as string;
+          // Cast action to PayloadAction<string | undefined> for payload and error access
+          const typedAction = action as {
+            payload?: string;
+            error?: { message?: string };
+          };
+
+          if (typedAction.payload) {
+            state.error = typedAction.payload;
+          } else if (typedAction.error?.message) {
+            state.error = typedAction.error.message;
+          } else {
+            state.error = "Unknown error";
+          }
         }
       );
-
   },
 });
 
