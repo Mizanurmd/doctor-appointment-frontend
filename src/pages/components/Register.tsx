@@ -63,10 +63,14 @@ const Register: React.FC = () => {
 
     try {
       await dispatch(addUser(userData)).unwrap();
-      toast.success("Register successful!");
+      toast.success("Register successful!",{
+        autoClose: 300,
+      });
       navigate("/");
     } catch (err) {
-      toast.error("Register failed. Please try again.");
+      toast.error("Register failed. Please try again.",{
+        autoClose: 300,
+      });
       console.error(err);
     }
   };

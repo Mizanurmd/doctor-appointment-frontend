@@ -1,29 +1,44 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Register from "./pages/components/Register";
 import Login from "./pages/components/Login";
-import PatientDashboard from "./pages/components/PatientDashboard";
+import Logout from "./pages/adminPanel/Logout";
 import PrivateRoute from "./Features/PrivateRoute";
 import AdminPanel from "./pages/adminPanel/AdminPanel";
-import Dashboard from "./pages/adminPanel/Dashboard";
-import Logout from "./pages/adminPanel/Logout";
 import { ToastContainer } from "react-toastify";
-import DoctorDashboard from "./pages/components/DoctorDashboard";
+import { routeComponentMap } from "./routeComponents";
+import Security from "./pages/components/Security";
 
+interface MenuItem {
+  path: string;
+  role: string;
+}
+
+const getMenuRoutes = (): MenuItem[] => {
+  const storedUser = localStorage.getItem("ourUser");
+  if (!storedUser) return [];
+
+  try {
+    const parsed = JSON.parse(storedUser);
+    const menus: MenuItem[] = parsed?.menus || [];
+    return menus;
+  } catch {
+    return [];
+  }
+};
 
 function App() {
-  return (
-    
-    <BrowserRouter>
+  const dynamicMenus = getMenuRoutes();
 
-      {/* other components */}
+  return (
+    <BrowserRouter>
       <ToastContainer position="top-center" autoClose={5000} />
-    
 
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<Register />} />
-
+        {/* Admin Layout Wrapper */}
         <Route
           path="/admin"
           element={
@@ -32,35 +47,39 @@ function App() {
             </PrivateRoute>
           }
         />
-      <Route
-          path="/admin/dashboard"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <Dashboard />
-            </PrivateRoute>
+        <Route path="/settings" element={<Security />}>
+          <Route
+            path="security"
+            element={
+              <PrivateRoute allowedRoles={["ADMIN"]}>
+                <AdminPanel />
+              </PrivateRoute>
+            }
+          />
+        </Route>
+        {/* Dynamically rendered menu-based routes */}
+        console.log("Dynamic menus from localStorage:", dynamicMenus);
+        {dynamicMenus.map((menu) => {
+          const Component = routeComponentMap[menu.path];
+          if (!Component) {
+            console.warn(`No component found for path: ${menu.path}`);
+            return null;
           }
-        />
 
-         <Route
-          path="/appointments"
-          element={
-            <PrivateRoute allowedRoles={["USER"]}>
-              <DoctorDashboard />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/patient"
-          element={
-            <PrivateRoute allowedRoles={["PATIENT"]}>
-              <PatientDashboard />
-            </PrivateRoute>
-          }
-        />
+          return (
+            <Route
+              key={menu.path}
+              path={menu.path}
+              element={
+                <PrivateRoute allowedRoles={[menu.role]}>
+                  <Component />
+                </PrivateRoute>
+              }
+            />
+          );
+        })}
       </Routes>
     </BrowserRouter>
-    
   );
 }
 

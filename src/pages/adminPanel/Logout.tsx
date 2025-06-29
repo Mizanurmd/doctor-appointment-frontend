@@ -7,7 +7,9 @@ const Logout = () => {
 
   useEffect(() => {
     localStorage.removeItem("ourUser"); 
-     toast.success("Logout successful!");
+     toast.success("Logout successful!",{
+      autoClose: 300,
+     });
     navigate("/"); 
   }, [navigate]);
 

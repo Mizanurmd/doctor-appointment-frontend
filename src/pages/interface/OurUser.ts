@@ -32,5 +32,9 @@ export interface AuthResponse{
   expirationTime?: string;
   role?: Role;
   user?: OurUser;
+  menus: {
+    path: string;
+    role: string;
+  }[];
 }
 

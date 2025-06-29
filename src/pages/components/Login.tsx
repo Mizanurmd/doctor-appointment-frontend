@@ -15,7 +15,7 @@ const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // ✅ Only enable login when email is valid and password is not empty
+  //Only enable login when email is valid and password is not empty
   const isFormValid = useMemo(() => {
     const isEmailValid = /\S+@\S+\.\S+/.test(userData.email.trim());
     const isPasswordValid = userData.password.trim();
@@ -38,29 +38,37 @@ const Login: React.FC = () => {
 
     try {
       const res = await dispatch(loginForUser(userData)).unwrap();
+
+      //Store token, role, and menus
       localStorage.setItem(
         "ourUser",
         JSON.stringify({
           token: res.token,
           refreshToken: res.refreshToken,
           role: res.role,
+          menus: res.menus,
         })
       );
 
       const roleName = res?.role?.roleName?.toUpperCase();
-
-      if (roleName === "ADMIN") {
-        navigate("/admin");
-        return toast.success("Login successful!");
-      } else if (roleName === "USER") {
-        navigate("/appointments");
-        return toast.success("Login successful!");
-      } else if (roleName === "PATIENT") {
-        navigate("/patient");
-        return toast.success("Login successful!");
-      } else {
-        navigate("/");
-        toast.error("Login failed. Please try again.");
+      switch (roleName) {
+        case "ADMIN":
+          toast.success("Login successful!", {
+            autoClose: 300,
+          });
+          navigate("/admin");
+          break;
+        case "USER":
+         toast.success("Login successful!", {
+            autoClose: 300,
+          });
+          navigate("/settings/security");
+          break;
+        default:
+          toast.error("Unauthorized role.",{
+            autoClose: 300,
+          });
+          navigate("/");
       }
     } catch (err) {
       toast.error("Login failed. Please try again.");
