@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../Features/store";
 import { loginForUser } from "../../app/services/authServiceSlice";
 import type { LoginUserDTO } from "../interface/OurUser";
 import { toast } from "react-toastify";
-import type { ErrorType } from "../constant/errors";
 
 const Login: React.FC = () => {
   const [userData, setUserData] = useState<LoginUserDTO>({
@@ -15,27 +14,14 @@ const Login: React.FC = () => {
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [errors, setErrors] = useState<ErrorType>({});
 
-  //===================== Start Validation ==========================//
-  const loginValidate = () => {
-    const newErrors: ErrorType = {};
+  // ✅ Only enable login when email is valid and password is not empty
+  const isFormValid = useMemo(() => {
+    const isEmailValid = /\S+@\S+\.\S+/.test(userData.email.trim());
+    const isPasswordValid = userData.password.trim();
+    return isEmailValid && isPasswordValid;
+  }, [userData.email, userData.password]);
 
-    if (!userData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(userData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!userData.password.trim()) {
-      newErrors.password = "Password is required";
-    }
-
-    return newErrors;
-  };
-  //===================== End Validation ==========================//
-
-  //===================== Start handleChange ==========================//
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -45,29 +31,10 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value,
     }));
-
-    // Real-time error cleanup
-    setErrors((prevErrors) => {
-      const newErrors = { ...prevErrors };
-      if (name === "email" && /\S+@\S+\.\S+/.test(value)) {
-        delete newErrors.email;
-      }
-      if (name === "password" && value.trim()) {
-        delete newErrors.password;
-      }
-      return newErrors;
-    });
   };
-  //===================== End handleChange ==========================//
 
-  //===================== Start Login submit ==========================//
   const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const validationErrors = loginValidate();
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) return;
 
     try {
       const res = await dispatch(loginForUser(userData)).unwrap();
@@ -76,32 +43,30 @@ const Login: React.FC = () => {
         JSON.stringify({
           token: res.token,
           refreshToken: res.refreshToken,
-          role: res.role, // role object
+          role: res.role,
         })
       );
 
       const roleName = res?.role?.roleName?.toUpperCase();
-      console.log("Authenticated user role:", roleName);
-
-      toast.success("Login successful!");
 
       if (roleName === "ADMIN") {
         navigate("/admin");
+        return toast.success("Login successful!");
       } else if (roleName === "USER") {
         navigate("/appointments");
+        return toast.success("Login successful!");
       } else if (roleName === "PATIENT") {
         navigate("/patient");
+        return toast.success("Login successful!");
       } else {
-        toast.error("Unknown role. Redirecting to home.");
         navigate("/");
+        toast.error("Login failed. Please try again.");
       }
     } catch (err) {
       toast.error("Login failed. Please try again.");
       console.error("Login error:", err);
     }
   };
-
-  //===================== End submit login ==========================//
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 rounded-2xl">
@@ -123,7 +88,6 @@ const Login: React.FC = () => {
                 onChange={handleChange}
                 className="w-full border px-3 py-2 rounded"
               />
-              {errors.email && <p className="text-red-600">{errors.email}</p>}
             </div>
 
             {/* Password */}
@@ -137,19 +101,22 @@ const Login: React.FC = () => {
                 onChange={handleChange}
                 className="w-full border px-3 py-2 rounded"
               />
-              {errors.password && (
-                <p className="text-red-600">{errors.password}</p>
-              )}
             </div>
           </div>
 
           <div className="text-center">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-red-600 text-white px-4 py-2 rounded mt-4"
+              disabled={!isFormValid}
+              className={`${
+                isFormValid
+                  ? "bg-blue-600 hover:bg-red-600"
+                  : "bg-gray-400 cursor-not-allowed"
+              } text-white px-4 py-2 rounded mt-4`}
             >
               Login
             </button>
+
             <p className="mt-2 hover:text-red-700">
               Not registered? <a href="/register">Register</a>
             </p>

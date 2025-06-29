@@ -33,18 +33,6 @@ export const fetchRoles = createAsyncThunk<
   }
 });
 
-// Create a new role (optional)
-export const createRole = createAsyncThunk<Role, Role, { rejectValue: string }>(
-  "role/createRole",
-  async (role, thunkAPI) => {
-    try {
-      return await RoleAPI.createRole(role);
-    } catch {
-      return thunkAPI.rejectWithValue("Failed to create role.");
-    }
-  }
-);
-
 // ======================= Slice =======================
 
 const roleSlice = createSlice({
@@ -64,10 +52,6 @@ const roleSlice = createSlice({
       .addCase(fetchRoles.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Unknown error";
-      })
-
-      .addCase(createRole.fulfilled, (state, action: PayloadAction<Role>) => {
-        state.roles.push(action.payload);
       });
   },
 });

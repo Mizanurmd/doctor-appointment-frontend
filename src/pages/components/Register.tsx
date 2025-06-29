@@ -32,13 +32,11 @@ const Register: React.FC = () => {
         const roles = await dispatch(fetchRoles()).unwrap();
         setRoleOptions(roles);
       } catch (err) {
-        console.error("Failed to fetch roles:", err);
-        toast.error("Failed to load roles.");
+        console.error("Failed to load roles:", err);
       }
     };
-
     loadRoles();
-  }, [dispatch]);
+  }, []);
 
   const validate = (): ErrorType => {
     const newErrors: ErrorType = {};
@@ -90,7 +88,8 @@ const Register: React.FC = () => {
     setErrors((prev) => {
       const newErrors = { ...prev };
       if (name === "name" && value.trim().length >= 3) delete newErrors.name;
-      if (name === "email" && /\S+@\S+\.\S+/.test(value)) delete newErrors.email;
+      if (name === "email" && /\S+@\S+\.\S+/.test(value))
+        delete newErrors.email;
       if (name === "password" && value.trim()) delete newErrors.password;
       if (name === "role" && value !== "") delete newErrors.role;
       return newErrors;
@@ -144,7 +143,9 @@ const Register: React.FC = () => {
               placeholder="Enter your password"
               className="w-full border px-3 py-2 rounded"
             />
-            {errors.password && <p className="text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-600">{errors.password}</p>
+            )}
           </div>
 
           {/* Role */}
